@@ -5,24 +5,42 @@ import com.aymandev.universalresources.UniversalResourcesItems;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.NotNull;
 
 public class UniversalResourcesRecipeProvider extends RecipeProvider {
-  public UniversalResourcesRecipeProvider(
-      PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-    super(output, registries);
+  /** PORT(26.1): providers are created per datagen run by a Runner that supplies the lookup and the output. */
+  public static class Runner extends RecipeProvider.Runner {
+    public Runner(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+      super(output, registries);
+    }
+
+    @Override
+    protected RecipeProvider createRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
+      return new UniversalResourcesRecipeProvider(registries, output);
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return "Universal Resources Recipes";
+    }
+  }
+
+  protected UniversalResourcesRecipeProvider(HolderLookup.Provider registries, RecipeOutput output) {
+    super(registries, output);
   }
 
   @Override
-  protected void buildRecipes(@NotNull RecipeOutput output) {
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.WOOD_PILE.get(), 8)
+  protected void buildRecipes() {
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.WOOD_PILE.get(), 8)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -31,7 +49,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.WOOD_PILE.get(), 16)
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.WOOD_PILE.get(), 16)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -40,9 +58,9 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(
             output,
-            ResourceLocation.fromNamespaceAndPath(UniversalResources.MODID, "wood_pile_x16"));
+            ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(UniversalResources.MODID, "wood_pile_x16")));
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.STONE_PILE.get(), 8)
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.STONE_PILE.get(), 8)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -51,7 +69,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.STONE_PILE.get(), 16)
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.STONE_PILE.get(), 16)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -60,9 +78,9 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(
             output,
-            ResourceLocation.fromNamespaceAndPath(UniversalResources.MODID, "stone_pile_x16"));
+            ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(UniversalResources.MODID, "stone_pile_x16")));
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.IRON_PILE.get(), 8)
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.IRON_PILE.get(), 8)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -71,7 +89,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(
+    ShapedRecipeBuilder.shaped(this.items,
             RecipeCategory.MISC, UniversalResourcesItems.RARE_METAL_PILE.get(), 8)
         .pattern("AAA")
         .pattern("ABA")
@@ -81,7 +99,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.TOOLS_PACK.get(), 8)
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.TOOLS_PACK.get(), 8)
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -90,7 +108,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(RecipeCategory.MISC, UniversalResourcesItems.UNIVERSAL_PACK.get())
+    ShapedRecipeBuilder.shaped(this.items, RecipeCategory.MISC, UniversalResourcesItems.UNIVERSAL_PACK.get())
         .pattern("AAA")
         .pattern("ABA")
         .pattern("AAA")
@@ -99,7 +117,7 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(output);
 
-    ShapedRecipeBuilder.shaped(
+    ShapedRecipeBuilder.shaped(this.items,
             RecipeCategory.MISC, UniversalResourcesItems.UNIVERSAL_PACK.get(), 16)
         .pattern("AAA")
         .pattern("ABA")
@@ -109,6 +127,6 @@ public class UniversalResourcesRecipeProvider extends RecipeProvider {
         .unlockedBy("has_logs", has(ItemTags.LOGS))
         .save(
             output,
-            ResourceLocation.fromNamespaceAndPath(UniversalResources.MODID, "universal_pack_x16"));
+            ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(UniversalResources.MODID, "universal_pack_x16")));
   }
 }

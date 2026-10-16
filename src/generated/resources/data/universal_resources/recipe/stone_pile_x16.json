@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": {
-      "item": "minecraft:deepslate"
-    },
-    "B": {
-      "item": "minecraft:stone"
-    }
+    "A": "minecraft:deepslate",
+    "B": "minecraft:stone"
   },
   "pattern": [
     "AAA",

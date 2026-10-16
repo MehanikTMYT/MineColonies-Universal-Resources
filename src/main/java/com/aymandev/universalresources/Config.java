@@ -2,7 +2,7 @@ package com.aymandev.universalresources;
 
 import java.util.List;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
@@ -149,7 +149,7 @@ public class Config {
               List.of(
                   "#" + BlockTags.IRON_ORES.location(),
                   BuiltInRegistries.BLOCK.getKey(Blocks.IRON_BLOCK).toString(),
-                  BuiltInRegistries.BLOCK.getKey(Blocks.CHAIN).toString(),
+                  BuiltInRegistries.BLOCK.getKey(Blocks.IRON_CHAIN).toString(),
                   BuiltInRegistries.BLOCK.getKey(Blocks.IRON_TRAPDOOR).toString(),
                   BuiltInRegistries.BLOCK.getKey(Blocks.IRON_BARS).toString(),
                   BuiltInRegistries.BLOCK.getKey(Blocks.IRON_DOOR).toString(),
@@ -165,7 +165,7 @@ public class Config {
               List.of(
                   "#" + ItemTags.IRON_ORES.location(),
                   BuiltInRegistries.ITEM.getKey(Items.IRON_BLOCK).toString(),
-                  BuiltInRegistries.ITEM.getKey(Items.CHAIN).toString(),
+                  BuiltInRegistries.ITEM.getKey(Items.IRON_CHAIN).toString(),
                   BuiltInRegistries.ITEM.getKey(Items.RAW_IRON).toString(),
                   BuiltInRegistries.ITEM.getKey(Items.IRON_TRAPDOOR).toString(),
                   BuiltInRegistries.ITEM.getKey(Items.IRON_BARS).toString(),
@@ -236,27 +236,16 @@ public class Config {
 
   static final ModConfigSpec SPEC = BUILDER.build();
 
+  /**
+   * PORT(26.1): only the id syntax is validated. NeoForge validates the defaults while the mod is being constructed,
+   * before other mods (Structurize's substitution blocks) have registered anything, so a registry lookup here rejected
+   * the mod's own defaults and stopped the game. Unknown ids resolve to air when used and simply never match.
+   */
   private static boolean validateItemName(final Object obj) {
     if (!(obj instanceof String name)) {
       return false;
     }
 
-    if (name.startsWith("#")) {
-      var id = ResourceLocation.tryParse(name.substring(1));
-
-      return id != null;
-    }
-
-    var id = ResourceLocation.tryParse(name);
-
-    if (id == null) {
-      return false;
-    }
-
-    if (BuiltInRegistries.BLOCK.containsKey(id)) {
-      return true;
-    }
-
-    return BuiltInRegistries.ITEM.containsKey(id);
+    return Identifier.tryParse(name.startsWith("#") ? name.substring(1) : name) != null;
   }
 }

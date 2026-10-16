@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": {
-      "item": "minecraft:deepslate"
-    },
-    "B": {
-      "tag": "minecraft:planks"
-    }
+    "A": "minecraft:deepslate",
+    "B": "#minecraft:planks"
   },
   "pattern": [
     "AAA",

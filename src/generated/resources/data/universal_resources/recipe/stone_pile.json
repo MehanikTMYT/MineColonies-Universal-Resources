@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "A": {
-      "tag": "minecraft:logs"
-    },
-    "B": {
-      "item": "minecraft:stone"
-    }
+    "A": "#minecraft:logs",
+    "B": "minecraft:stone"
   },
   "pattern": [
     "AAA",

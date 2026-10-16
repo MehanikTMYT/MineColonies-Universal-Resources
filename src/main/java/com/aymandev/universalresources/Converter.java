@@ -1,5 +1,10 @@
 package com.aymandev.universalresources;
 
+import java.util.Set;
+import java.util.HashSet;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.server.level.ServerLevel;
 import com.ldtteam.domumornamentum.block.IMateriallyTexturedBlock;
 import com.ldtteam.domumornamentum.recipe.architectscutter.ArchitectsCutterRecipe;
 import java.util.ArrayList;
@@ -7,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -113,58 +118,82 @@ public class Converter {
 
   private static boolean matches(BlockState blockState, String value) {
     if (value.startsWith("#")) {
-      var loc = ResourceLocation.parse(value.substring(1));
+      var loc = Identifier.parse(value.substring(1));
       var tag = TagKey.create(BuiltInRegistries.BLOCK.key(), loc);
 
       return blockState.is(tag);
     }
 
-    var loc = ResourceLocation.parse(value);
-    var block = BuiltInRegistries.BLOCK.get(loc);
-
-    return blockState.is(block);
+    var loc = Identifier.parse(value);
+    // PORT(26.1): Registry#get returns an Optional holder; getValue is the plain lookup.
+    return blockState.is(BuiltInRegistries.BLOCK.getValue(loc));
   }
 
-  private static Ingredient getIngredientFromConfig(List<? extends String> strList) {
-    var list = new ArrayList<Ingredient.Value>();
+  /**
+   * PORT(26.1): Ingredient no longer mixes tag and item values (it is a single HolderSet), so the configured list is
+   * kept as a predicate plus the expanded item list the Architect's Cutter check needs.
+   */
+  private record Required(Set<TagKey<Item>> tags, Set<Item> items) {
+    boolean test(ItemStack stack) {
+      if (items.contains(stack.getItem())) {
+        return true;
+      }
+      for (var tag : tags) {
+        if (stack.is(tag)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    List<Item> expanded() {
+      var result = new ArrayList<Item>(items);
+      for (var tag : tags) {
+        BuiltInRegistries.ITEM.getTagOrEmpty(tag).forEach(holder -> result.add(holder.value()));
+      }
+      return result;
+    }
+  }
+
+  private static Required getIngredientFromConfig(List<? extends String> strList) {
+    var tags = new HashSet<TagKey<Item>>();
+    var items = new HashSet<Item>();
 
     for (var str : strList) {
       if (str.startsWith("#")) {
-        var loc = ResourceLocation.parse(str.substring(1));
-        var tag = TagKey.create(BuiltInRegistries.ITEM.key(), loc);
-
-        list.add(new Ingredient.TagValue(tag));
+        tags.add(TagKey.create(BuiltInRegistries.ITEM.key(), Identifier.parse(str.substring(1))));
         continue;
       }
-
-      var loc = ResourceLocation.parse(str);
-      var item = BuiltInRegistries.ITEM.get(loc);
-
-      list.add(new Ingredient.ItemValue(new ItemStack(item)));
+      items.add(BuiltInRegistries.ITEM.getValue(Identifier.parse(str)));
     }
 
-    return Ingredient.fromValues(list.stream());
+    return new Required(tags, items);
   }
 
-  private static boolean isBlockCraftableWith(
-      Level level, Block block, Ingredient requiredIngredient) {
+  /**
+   * PORT(26.1): recipes live on the server only (ServerLevel#recipeAccess), and a recipe's result and ingredients are
+   * read through its displays and placement info instead of getResultItem/getIngredients.
+   */
+  private static boolean isBlockCraftableWith(Level level, Block block, Required required) {
+    if (!(level instanceof ServerLevel serverLevel)) {
+      return false;
+    }
 
     var item = block.asItem();
 
-    for (var holder : level.getRecipeManager().getRecipes()) {
+    for (var holder : serverLevel.recipeAccess().getRecipes()) {
       var recipe = holder.value();
 
-      var result = recipe.getResultItem(level.registryAccess());
-      if (!result.is(item)) {
+      if (!producesItem(recipe, item)) {
         continue;
       }
 
       if (recipe instanceof ArchitectsCutterRecipe cutterRecipe) {
-        return architectsCutterContainsIngredient(cutterRecipe, requiredIngredient);
+        return architectsCutterContainsIngredient(cutterRecipe, required);
       }
 
-      for (var ingredient : recipe.getIngredients()) {
-        if (containsIngredient(ingredient, requiredIngredient)) {
+      for (var ingredient : recipe.placementInfo().ingredients()) {
+        if (containsIngredient(ingredient, required)) {
           return true;
         }
       }
@@ -173,19 +202,25 @@ public class Converter {
     return false;
   }
 
-  private static boolean containsIngredient(
-      Ingredient recipeIngredient, Ingredient requiredIngredient) {
-    for (var stack : recipeIngredient.getItems()) {
-      if (requiredIngredient.test(stack)) {
+  private static boolean producesItem(Recipe<?> recipe, Item item) {
+    for (var display : recipe.display()) {
+      var result = display.result();
+      if (result instanceof SlotDisplay.ItemSlotDisplay itemDisplay && itemDisplay.item().value() == item) {
+        return true;
+      }
+      if (result instanceof SlotDisplay.ItemStackSlotDisplay stackDisplay && stackDisplay.stack().item().value() == item) {
         return true;
       }
     }
-
     return false;
   }
 
+  private static boolean containsIngredient(Ingredient recipeIngredient, Required required) {
+    return recipeIngredient.items().anyMatch(holder -> required.test(new ItemStack(holder)));
+  }
+
   private static boolean architectsCutterContainsIngredient(
-      ArchitectsCutterRecipe recipe, Ingredient requiredIngredient) {
+      ArchitectsCutterRecipe recipe, Required required) {
     var output = recipe.getBlock();
 
     if (!(output instanceof IMateriallyTexturedBlock textured)) {
@@ -195,8 +230,8 @@ public class Converter {
     for (var component : textured.getComponents()) {
       var validSkins = component.getValidSkins();
 
-      for (var stack : requiredIngredient.getItems()) {
-        if (!(stack.getItem() instanceof BlockItem item)) {
+      for (var candidate : required.expanded()) {
+        if (!(candidate instanceof BlockItem item)) {
           continue;
         }
 

@@ -1,0 +1,18 @@
+{
+  "itemGroup.universal_resources": "MineColonies: универсальные ресурсы",
+  "item.universal_resources.wood_pile": "Груда древесины",
+  "item.universal_resources.stone_pile": "Груда камня",
+  "item.universal_resources.iron_pile": "Груда железа",
+  "item.universal_resources.rare_metals_pile": "Груда редких металлов",
+  "item.universal_resources.tools_pack": "Набор инструментов",
+  "item.universal_resources.universal_pack": "Универсальный набор",
+  "universal_resources.configuration.title": "MineColonies: универсальные ресурсы — настройки",
+  "universal_resources.configuration.section.universal_resources.common.toml": "MineColonies: универсальные ресурсы — настройки",
+  "universal_resources.configuration.section.universal_resources.common.toml.title": "MineColonies: универсальные ресурсы — настройки",
+  "universal_resources.configuration.resourceSpendModifier": "Множитель количества ресурсов",
+  "universal_resources.configuration.woodItems": "Предметы-древесина",
+  "universal_resources.configuration.stoneItems": "Предметы-камень",
+  "universal_resources.configuration.ironItems": "Предметы-железо",
+  "universal_resources.configuration.rareMetalItems": "Предметы-редкие металлы",
+  "universal_resources.configuration.toolsItems": "Предметы-инструменты"
+}

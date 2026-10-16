@@ -9,13 +9,12 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 public class UniversalResourcesDataGenerators {
 
   @SubscribeEvent
-  public static void gatherData(GatherDataEvent event) {
+  public static void gatherData(GatherDataEvent.Server event) {
     var generator = event.getGenerator();
     var output = generator.getPackOutput();
 
     var lookup = event.getLookupProvider();
 
-    generator.addProvider(
-        event.includeServer(), new UniversalResourcesRecipeProvider(output, lookup));
+    generator.addProvider(true, new UniversalResourcesRecipeProvider.Runner(output, lookup));
   }
 }
